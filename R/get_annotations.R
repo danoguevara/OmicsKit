@@ -18,6 +18,25 @@
 #' @param format The output is saved in .csv or .xlsx formats. Default = csv.
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
+#' @returns A data frame with Ensembl annotations. For \code{mode = "genes"}: columns \code{geneID}, \code{symbol}, \code{biotype}, \code{chromosome}, \code{gene_start}, \code{gene_end}, \code{gene_length}, \code{description}. For \code{mode = "transcripts"}: \code{transcriptID} plus the same gene-level columns. Unmatched IDs return \code{NA}. The table is also written to disk as \code{<filename>.csv} or \code{<filename>.xlsx} depending on \code{format}.
+#' @examples
+#' \dontrun{
+#' # (1) Annotate genes; save CSV using the current Ensembl
+#' ensg <- c("ENSG00000141510", "ENSG00000146648")
+#' ann_genes <- get_annotations(ensembl_ids = ensg,
+#'                              mode = "genes",
+#'                              version = "Current",
+#'                              format = "csv",
+#'                              filename = tempfile("gene_ann"))
+#'
+#' # (2) Annotate transcripts; save XLSX using Ensembl v112
+#' enst <- c("ENST00000269305.8", "ENST00000331728.9")
+#' ann_tx <- get_annotations(ensembl_ids = enst,
+#'                           mode = "transcripts",
+#'                           version = "112",
+#'                           format = "xlsx",
+#'                           filename = tempfile("tx_ann"))
+#' }
 #' @export
 
 get_annotations <- function(ensembl_ids, mode = "genes", filename = "gene_annotations", version = "Current", format = "csv") {

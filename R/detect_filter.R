@@ -17,6 +17,42 @@
 #' @param samples.condition2 Vector of Sample IDs or indexes corresponding to the second condition (optional).
 #' @param samples.condition3 Vector of Sample IDs or indexes corresponding to the third condition (optional).
 #' @param cutoffs Vector containing threshold values for baseMean, mean normalized counts and Log2 Fold Change; respectively. Default: c(50, 50, 0).
+#' @returns A named list with \code{DetectGenes} (character vector of Ensembl IDs that pass the thresholds), \code{Comparison1} (filtered \code{df.BvsA}), and, if provided, \code{Comparison2} and \code{Comparison3} (filtered \code{df.CvsA}/\code{df.DvsA}); empty results yield \code{character(0)} and 0-row data frames.
+#' @examples
+#' # Minimal 2-gene, 2x2 design (Baseline vs Condition1)
+#' norm.counts <- data.frame(A1 = c(60, 5), A2 = c(55, 10),
+#'                           B1 = c(100, 2), B2 = c(90, 3),
+#'                           row.names = c("ENSG1","ENSG2"))
+#'
+#' df.BvsA <- data.frame(ensembl = c("ENSG1","ENSG2"),
+#'                       baseMean = c(80, 8),
+#'                       log2FoldChange = c(1.2, -0.5))
+#'
+#' res1 <- detect_filter(norm.counts = norm.counts,
+#'                       df.BvsA = df.BvsA,
+#'                       samples.baseline = c("A1","A2"),
+#'                       samples.condition1 = c("B1","B2"))
+#'
+#' names(res1); res1$DetectGenes
+#'
+#' # Adding a second comparison (Condition2 vs Baseline)
+#' norm.counts <- data.frame(A1 = c(60, 5), A2 = c(55, 10),
+#'                           B1 = c(100, 2), B2 = c(90, 3),
+#'                           C1 = c(70, 1),  C2 = c(65, 2),
+#'                           row.names = c("ENSG1","ENSG2"))
+#'
+#' df.CvsA <- data.frame(ensembl = c("ENSG1","ENSG2"),
+#'                       baseMean = c(75, 12),
+#'                       log2FoldChange = c(0.8, -0.3))
+#'
+#' res2 <- detect_filter(norm.counts = norm.counts,
+#'                       df.BvsA = df.BvsA,
+#'                       df.CvsA = df.CvsA,
+#'                       samples.baseline = c("A1","A2"),
+#'                       samples.condition1 = c("B1","B2"),
+#'                       samples.condition2 = c("C1","C2"))
+#'
+#' names(res2); res2$DetectGenes
 #' @export
 
 
@@ -28,27 +64,27 @@ detect_filter <- function(norm.counts, df.BvsA, df.CvsA = NULL, df.DvsA = NULL, 
   if (length(cutoffs) != 3) {
     stop("Cutoffs vector must contain three values: baseMean, mean normalized counts, and Log2 Fold Change thresholds.")
   }
-  
+
   # Create an empty vector to store genes temporary
   genes_vector <- c()
-  
+
   # Obtain mean normalized counts per phenotype
   norm.counts$Mean.Baseline <- rowMeans(norm.counts[, samples.baseline])
   norm.counts$Mean.Condition1 <- rowMeans(norm.counts[, samples.condition1])
-  
+
   # Filter data frames by baseMean
   df.BvsA.det <- df.BvsA[df.BvsA$baseMean > cutoffs[1], ]
-  
+
   if (!is.null(df.CvsA)) {
     norm.counts$Mean.Condition2 <- rowMeans(norm.counts[, samples.condition2])
     df.CvsA.det <- df.CvsA[df.CvsA$baseMean > cutoffs[1], ]
   }
-  
+
   if (!is.null(df.DvsA)) {
     norm.counts$Mean.Condition3 <- rowMeans(norm.counts[, samples.condition3])
     df.DvsA.det <- df.DvsA[df.DvsA$baseMean > cutoffs[1], ]
   }
-  
+
   # Get detectable genes
   for (i in 1:length(df.BvsA.det[, "ensembl"])) {
     if (df.BvsA.det[i, "log2FoldChange"] > cutoffs[3]) {
@@ -61,7 +97,7 @@ detect_filter <- function(norm.counts, df.BvsA, df.CvsA = NULL, df.DvsA = NULL, 
       }
     }
   }
-  
+
   if (!is.null(df.CvsA)) {
     for (i in 1:length(df.CvsA.det[, "ensembl"])) {
       if (df.CvsA.det[i, "log2FoldChange"] > cutoffs[3]) {
@@ -75,7 +111,7 @@ detect_filter <- function(norm.counts, df.BvsA, df.CvsA = NULL, df.DvsA = NULL, 
       }
     }
   }
-  
+
   if (!is.null(df.DvsA)) {
     for (i in 1:length(df.DvsA.det[, "ensembl"])) {
       if (df.DvsA.det[i, "log2FoldChange"] > cutoffs[3]) {
@@ -89,23 +125,23 @@ detect_filter <- function(norm.counts, df.BvsA, df.CvsA = NULL, df.DvsA = NULL, 
       }
     }
   }
-  
+
   # Remove duplicates
   genes_vector <- unique(genes_vector)
-  
+
   # Subset data frames to only include detectable genes
   df.BvsA.det <- df.BvsA.det[df.BvsA.det$ensembl %in% genes_vector, ]
   detected_genes <- list(Comparison1 = df.BvsA.det, DetectGenes = genes_vector)
-  
+
   if (!is.null(df.CvsA)) {
     df.CvsA.det <- df.CvsA.det[df.CvsA.det$ensembl %in% genes_vector, ]
     detected_genes$Comparison2 <- df.CvsA.det
   }
-  
+
   if (!is.null(df.DvsA)) {
     df.DvsA.det <- df.DvsA.det[df.DvsA.det$ensembl %in% genes_vector, ]
     detected_genes$Comparison3 <- df.DvsA.det
   }
-  
+
   return(detected_genes)
 }

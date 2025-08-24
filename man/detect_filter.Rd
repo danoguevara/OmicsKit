@@ -35,8 +35,47 @@ detect_filter(
 
 \item{samples.condition3}{Vector of Sample IDs or indexes corresponding to the third condition (optional).}
 }
+\value{
+A named list with \code{DetectGenes} (character vector of Ensembl IDs that pass the thresholds), \code{Comparison1} (filtered \code{df.BvsA}), and, if provided, \code{Comparison2} and \code{Comparison3} (filtered \code{df.CvsA}/\code{df.DvsA}); empty results yield \code{character(0)} and 0-row data frames.
+}
 \description{
 This function identifies genes with measurable expression levels across samples.
 Detectable genes must meet two conditions: the baseMean and their mean normalized counts in the phenotypes of interest must be greater than a set threshold.
 It returns a list of detectable genes and the comparisons in which they can be found.
+}
+\examples{
+# Minimal 2-gene, 2x2 design (Baseline vs Condition1)
+norm.counts <- data.frame(A1 = c(60, 5), A2 = c(55, 10),
+                          B1 = c(100, 2), B2 = c(90, 3),
+                          row.names = c("ENSG1","ENSG2"))
+
+df.BvsA <- data.frame(ensembl = c("ENSG1","ENSG2"),
+                      baseMean = c(80, 8),
+                      log2FoldChange = c(1.2, -0.5))
+
+res1 <- detect_filter(norm.counts = norm.counts,
+                      df.BvsA = df.BvsA,
+                      samples.baseline = c("A1","A2"),
+                      samples.condition1 = c("B1","B2"))
+
+names(res1); res1$DetectGenes
+
+# Adding a second comparison (Condition2 vs Baseline)
+norm.counts <- data.frame(A1 = c(60, 5), A2 = c(55, 10),
+                          B1 = c(100, 2), B2 = c(90, 3),
+                          C1 = c(70, 1),  C2 = c(65, 2),
+                          row.names = c("ENSG1","ENSG2"))
+
+df.CvsA <- data.frame(ensembl = c("ENSG1","ENSG2"),
+                      baseMean = c(75, 12),
+                      log2FoldChange = c(0.8, -0.3))
+
+res2 <- detect_filter(norm.counts = norm.counts,
+                      df.BvsA = df.BvsA,
+                      df.CvsA = df.CvsA,
+                      samples.baseline = c("A1","A2"),
+                      samples.condition1 = c("B1","B2"),
+                      samples.condition2 = c("C1","C2"))
+
+names(res2); res2$DetectGenes
 }

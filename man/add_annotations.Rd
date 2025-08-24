@@ -15,6 +15,25 @@ add_annotations(object, reference, variables = NULL, data_frame = FALSE)
 
 \item{data_frame}{Logical; if TRUE, coerce \code{object} to a data.frame first. Default: FALSE.}
 }
+\value{
+A data frame equal to \code{object} with its original columns plus the selected annotation columns from \code{reference}. Row order is preserved; unmatched IDs yield \code{NA} in the new columns.
+}
 \description{
 A function to add annotations to a table of gene counts.
+}
+\examples{
+\dontrun{
+counts <- matrix(c(10, 20, 30, 40), nrow = 2,
+                 dimnames = list(c("ENSG000001", "ENSG000002"), c("S1", "S2")))
+
+ref <- data.frame(geneID  = c("ENSG000001", "ENSG000002"),
+                  symbol  = c("TP53", "EGFR"),
+                  biotype = c("protein_coding", "protein_coding"),
+                  stringsAsFactors = FALSE)
+
+add_annotations(counts, ref, variables = c("symbol", "biotype"))
+
+# Use all variables and coerce to data.frame
+add_annotations(counts, ref, data_frame = TRUE)
+}
 }
